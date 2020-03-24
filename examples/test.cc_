@@ -1,0 +1,95 @@
+using namespace std;
+#include <unistd.h>
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <ctime>
+#include "AppFramework/AppEvent.hh"
+#include "KrAtc/AtcHit.hh"
+#include "KrAtc/AtcMinuitFitter.h"
+#include "KrAtc/AtcLeamaxFitter.h"
+#include "KrAtc/AtcRec.hh"
+#include "TRint.h"
+#include "TROOT.h"
+#include "TCanvas.h"
+
+using namespace std;
+
+//TROOT root("root","ROOT Application");
+
+#define usecpc(beg,end) (1e6*(end-beg)/CLOCKS_PER_SEC/Ncycles)
+#define totsec(beg,end) (1.*(end-beg)/CLOCKS_PER_SEC)
+
+int main(int argc, char* argv[])
+{
+	int Ncycles=(argc>1)?atoi(argv[1]):1000;
+
+//	int ac = 2;
+//	char *av[2] = {"rint", "-l"};
+//	TApplication *app=new TRint("Rint",&ac,av,NULL,0,kFALSE);
+
+//	TCanvas* c1=new TCanvas("c1","Hit display",500,550);
+
+	AtcRec *atcRec = new AtcRec("AtcRec","ATC amplitude reconstruction");
+
+	atcRec->mode=AtcRec::RUN;
+	atcRec->loadCalibFromDB=true;
+
+	AppEvent init;
+	atcRec->beginJob(init);
+	init.clear();
+
+	int run=4723;
+	init.put("runNumber",run);
+	AppResult res=atcRec->beginRun(init);
+	if( res.status&AppResult::STOP ) {
+		cerr<<"<"<<atcRec->name()<<">: "<<res.message<<endl;
+		return 1;
+	}
+
+	short a[5]={24,49,854,660,329};
+	AtcHit hit(31,a);
+
+	cout<<"Number of cycles to run: "<<Ncycles<<endl;
+/*
+	AtcFitter *dfitter=new AtcFitter();
+	dfitter->fix(AtcFitter::id_P);
+	dfitter->fix(AtcFitter::id_A0);
+	AtcHit::fitter=dfitter;
+*/
+	clock_t cbeg2=clock();
+	for(int i=0; i<Ncycles; i++) {
+		hit.rec(0);
+//		hit.draw(c1,"vst");
+		if( ! (hit.getType()&AtcHit::Fitted) ) {
+			cerr<<"hit not fitted"<<endl;
+			break;
+		}
+//		sleep(2);
+//		c1->SaveAs("hit_minuit.root");
+	}
+	clock_t cend2=clock();
+	hit.print();
+/*
+	AtcHit::fitter=atcRec->fitter;
+
+	clock_t cbeg1=clock();
+	for(int i=0; i<Ncycles; i++) {
+		hit.rec(0);
+//		hit.draw(c1,"vst");
+		if( ! (hit.getType()&AtcHit::Fitted) ) {
+			cerr<<"hit not fitted"<<endl;
+			break;
+		}
+//		sleep(2);
+//		c1->SaveAs("hit_leamax.root");
+	}
+	clock_t cend1=clock();
+	hit.print();
+
+	cout<<"CPU time spent:\n"
+		<<"  LEAMAX:"<<totsec(cbeg1,cend1)<<" sec\n"
+		<<"  MINUIT:"<<totsec(cbeg2,cend2)<<" sec"<<endl;
+*/
+	return 0;
+}
