@@ -14,12 +14,12 @@ static const int NATC=160;
 
 /*Maximum number of stored DC tracks*/
 # ifndef ATC_NTRK
-#  define ATC_NTRK 16
+#  define ATC_NTRK 20
 # endif
 
 /*Maximum number of stored counters bound to track*/
 # ifndef ATC_NCROS
-#  define ATC_NCROS 16
+#  define ATC_NCROS 20
 # endif
 
 #endif
